@@ -65,6 +65,46 @@ obj.text = 'hello vue3'
 存储副作用函数的“桶”（存储了effect）
     |
 取出effect并执行
-（把副作用函数从“桶”内取出并执行）          
+（把副作用函数从“桶”内取出并执行）  
+
+现在问题的关键变成了我们如何才能拦截一个对象属性的读取和设置操作。在ES2015之前，只能通过
+object.defineProperty函数来实现，这也是Vue.js2所采用的方式。在ES2015+中，我们可以使
+用代理对象proxy来实现，这也是Vue.js3所采用的方式。
+
+接下来我们就根据如上思路，采用Proxy来实现：
+
+<!-- 存储副作用函数的桶 -->
+const bucket = new Set()
+
+// 原始数据
+const data = { text:'hello world' }
+// 对原始数据的代理
+const obj = new Proxy(data,{
+    // 拦截读取操作
+    get(target,key) {
+        // 将副作用函数effect添加到存储副作用函数的桶中
+        bucket.add(effect)
+        // 返回属性值
+        return target[key]
+    },
+
+    // 拦截设置操作
+    set(target,key,newVal) {
+        // 设置属性值
+        target[key] = newVal
+        // 把副作用函数从桶里面取出并执行
+        bucket.forEach(fn=>fn())
+        // 返回 true 代表设置操作成功
+        return true
+    }
+})
+
+function effect() {
+    document.body.innerText = obj.text  // 记住这里是obj，使用的是代理之后的数据
+}
+effect()
+setTimeout(function(){
+    obj.text = 'hello vue3' // 记住这里是obj，使用的是代理之后的数据
+},3000)
 ```
 
