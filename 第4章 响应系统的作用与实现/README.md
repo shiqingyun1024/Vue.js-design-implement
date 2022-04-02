@@ -24,5 +24,20 @@ let val = 1
 function(){
     val = 2 // 修改全局变量，产生副作用。
 }
+
+理解了什么是副作用函数，再来说说什么是响应数据。假设在一个副作用函数中读取了某
+个对象的属性：
+const obj = { text:'hello world' }
+function effect() {
+    // effect 函数的执行会读取obj.text
+    document.body.innerText = obj.text
+}
+如上面的代码所示，副作用函数effect会设置body元素的innerText属性，其值为obj.text,
+当obj.text的值发生变化时，我们希望副作用函数effect会重新执行：
+obj.text = ‘hello vue3’ // 修改obj.text的值，同时希望副作用函数会重新执行
+这句代码修改了字段obj.text的值，我们希望当值变化后，副作用函数自动重新执行，如果
+能实现这个目标，那么对象obj就是响应式数据。但很明显，以上面的代码来看，我们还做不到
+这一点，因为obj是一个普通对象，当我们修改它的值时，除了值本身发生变化之外，不会有任何其他
+反应。下一节中我们会讨论如何让数据变成响应式数据。
 ```
 
