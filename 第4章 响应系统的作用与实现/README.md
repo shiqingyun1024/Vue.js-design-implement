@@ -150,4 +150,44 @@ function effect(fn){
     // 执行副作用函数
     fn()
 }
+
+首先，定义了一个全局变量activeEffect，初始值是undefined，它的作用是存储被注册的
+副作用函数。接着重新定义了effect函数，它变成了一个用来注册副作用函数的函数，effect函
+数接收一个参数fn，即要注册的副作用函数。我们会如下所示使用effect函数：
+effect(
+    // 一个匿名的副作用函数
+    ()=>{
+        document.body.innerText = obj.text
+    }
+)
+
+可以看到，我们使用一个匿名的副作用函数作为effect函数的参数。当effect函数执行
+时，首先会把匿名的副作用函数赋值给全局变量activeEffect。接着执行被注册的匿名
+副作用函数fn，这将会触发响应式数据obj.text的读取操作，进而触发代理对象Proxy的
+get拦截函数：
+const obj = new Proxy(data,{
+    get(target,key){
+      // 将activeEffect中存储的副作用函数收集到“桶”中
+      if(activeEffect){ // 新增
+        bucket.add(activeEffect) // 新增
+      } // 新增
+      return target[key]
+    },
+    set(target,key,newVal){
+      target[key] = newVal
+      bucket.forEach(fn=>fn())
+      return true
+    }
+})
+如上面的代码所示，由于副作用函数已经存储到了activeEffect中，所以在get拦截函数内
+应该把activeEffect收集到‘桶’中，这样响应系统就不依赖副作用函数的名字了。（**？？解决了
+依赖副作用函数的名字的问题。？？**）
+但如果我们再对这个系统稍加测试，例如在响应式数据obj上设置一个不存在的属性时：
+effect(
+    <!-- 匿名副作用函数 -->
+    ()=>{
+      console.log('effect run') // 会打印2次
+      document.body.innerText = obj.text
+    }
+)
 ```
