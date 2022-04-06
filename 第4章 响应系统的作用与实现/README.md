@@ -225,5 +225,47 @@ target
 这是一种树型结构，下面举几个例子来对其进行补充说明。
 effect(function effectFn1(){
     obj.text
-})          
+})
+effect(function effectFn2(){
+    obj.text
+})
+那么关系如下：
+target
+   |
+    --- text
+         |
+          --- effectFn1
+              effectFn2
+如果一个副作用函数中读取了同一个对象的两个不同属性：
+effect(function effectFn(){
+    obj.text1
+    obj.text2
+})
+那么关系如下：
+target
+   |
+    --- text1
+         |
+          --- effectFn
+   |
+    ——— text2
+          |
+           ——- effectFn  
+如果在不同的副作用函数中读取了两个不同对象的不同属性：
+effect(function effectFn1(){
+    obj.text1
+})
+effect(function effectFn2(){
+    obj.text2
+})  
+那么关系如下：
+target
+   |
+    --- text1
+         |
+          --- effectFn1
+   |
+    ——— text2
+          |
+           ——- effectFn2                                 
 ```
