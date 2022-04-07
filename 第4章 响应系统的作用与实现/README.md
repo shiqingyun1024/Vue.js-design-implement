@@ -272,5 +272,21 @@ target
 题了。拿上面的例子来说，如果我们设置了obj.text2的值，就只会导致effectFn2函
 数重新执行，并不会导致effectFn1函数重新执行。
    接下来我们尝试用代码来实现这个新的“桶”。首先，需要使用weakMap代替Set作为
-“桶”的数据结构。                                            
+“桶”的数据结构。  
+// 存储副作用函数的桶
+const bucket = new WeakMap()
+然后修改get/set拦截器代码：
+const obj = new Proxy(data,{
+    // 拦截读取操作
+    get(target,key){
+        // 没有activeEffect，直接return
+        if(!activeEffect) return
+        // 根据target从“桶”中取得depsMap，它也是一个Map类型：key --> effects
+        let depsMap = bucket.get(target) // 有个疑问，这个target是什么？
+        // 如果不存在depsMap，那么新建一个Map并与target关联
+        if(!depsMap){
+          bucket.set(target,key,)
+        }
+    }
+})                                         
 ```
