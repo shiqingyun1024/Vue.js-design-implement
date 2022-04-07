@@ -285,8 +285,38 @@ const obj = new Proxy(data,{
         let depsMap = bucket.get(target) // 有个疑问，这个target是什么？
         // 如果不存在depsMap，那么新建一个Map并与target关联
         if(!depsMap){
-          bucket.set(target,key,)
+          bucket.set(target,( depsMap = new Map()))
         }
+        // 再根据key从depsMap中取得deps，它是一个Set类型，
+        // 里面存储着所有与当前key相关联的副作用函数：effects
+        let deps = depsMap.get(key)
+        // 如果deps不存在，同样新建一个Set并与key关联
+        if(!deps){
+            depsMap.set(key,(deps = new set()))
+        }
+        // 最后将当前激活的副作用函数添加到“桶”里
+        deps.add(activeEffect)
+        // 返回属性值
+        return target[key]
+    },
+    // 拦截设置操作
+    set(target,key,newVal){
+        // 设置属性值
+        target[key] = newVal
+        // 根据target从桶中取得desMap，它是key --> effects
+        const depsMap = bucket.get(target)
+        if(!depsMap) return
+        // 根据key取得所有副作用函数effects
+        const effects = depsMap.get(key)
+        // 执行副作用函数
+        effects && effects.forEach(fn=>fn())
     }
-})                                         
+})
+从这段代码可以看出构建数据结构的方式，我们分别使用了WeakMap、Map和Set：
+- WeakMap由target --> Map 构成；
+- Map由 key --> Set 构成。
+其中WeakMap的键是原始对象target，WeakMap的值是一个Map实例，而Map的键是原
+始对象target的key，Map的值是一个由副作用函数组成的Set。它们的关系如图4-3所
+示。
+                                         
 ```
