@@ -360,7 +360,27 @@ const weakmap = new WeakMap();
 到trigger函数中：
 const obj = new Proxy(data,{
     // 拦截读取操作
-    get(target,key)
+    get(target,key){
+        // 将副作用函数activeEffect添加到存储副作用函数的桶中
+        track(target,key)
+        // 返回属性值
+        return target[key]
+    },
+    // 拦截设置操作
+    set(target,key,newVal){
+        // 设置属性值
+        target[key] = newVal
+        // 把副作用函数从桶中取出并执行
+        trigger(target,key)
+    }
 })
+
+// 在get拦截函数内调用track函数追踪变化
+function track(target,key){
+   // 没有activeEffect，直接return
+   if(!activeEffect) return
+   let depsMap = bucket.get(target)
+   if()
+}
 
 ```
