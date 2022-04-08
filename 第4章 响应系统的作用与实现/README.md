@@ -318,5 +318,33 @@ const obj = new Proxy(data,{
 其中WeakMap的键是原始对象target，WeakMap的值是一个Map实例，而Map的键是原
 始对象target的key，Map的值是一个由副作用函数组成的Set。它们的关系如图4-3所
 示。
-                                         
+WeakMap
+  |
+ key 
+ target-1 ---Value--- Map
+ target-2              |  
+ Key-n                  --- key                依赖集合
+                            key-1  -- Value -- Set
+                            key-2              effect-1
+                              .                effect-2
+                              .                  .
+                            key-n              effect-n
+            图4-3 WeakMap、Map和Set之间的关系
+为了方便描述，我们把图4-3中的Set数据结构所存储的副作用函数集合称为key的依赖
+集合。
+搞清了它们之间的关系，我们有必要解释一下这里为什么要使用WeakMap，这其实涉及
+WeakMap和Map的区别，我们用一段代码来讲解：
+const map = new Map();
+const weakmap = new WeakMap();
+(function(){
+    const foo = { foo:1 };
+    const bar = { bar:2 };
+    map.set(foo,1);
+    weakmap.set(bar,2)
+})()
+首先我们定义了map和weakmap常量，分别对应Map和WeakMap的实例。接着定义了一个
+立即执行函数表达式（IIFE），在函数表达式内部定义了两个对象：foo和bar，这两个
+对象分别作为map和weakmap的key。当该函数表达式执行完毕之后，对于对象foo来说，它仍然
+作为map的key被引用着，因此垃圾回收器（grabage collector）不会把它从内存中移除，我们
+仍然可以通过map.keys打印出                            
 ```
