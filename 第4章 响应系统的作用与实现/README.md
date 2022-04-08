@@ -380,7 +380,21 @@ function track(target,key){
    // 没有activeEffect，直接return
    if(!activeEffect) return
    let depsMap = bucket.get(target)
-   if()
+   if(!depsMap){
+       bucket.set(target,(deps=new Map()))
+   }
+   let deps = depsMap.get(key)
+   if(!deps){
+       depsMap.set(key,(deps=new Set()))
+   }
+   deps.add(activeEffect)
+}
+// 在set拦截函数内调用trigger函数触发变化
+function trigger(target,key){
+   const depsMap = bucket.get(target)
+   if(!depsMap) return
+   const effects = depsMap.get(key)
+   effects && effects.forEach(fn=>fn())
 }
 
 ```
