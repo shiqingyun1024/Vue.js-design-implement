@@ -404,4 +404,7 @@ function trigger(target,key){
 首先，我们需要明确分支切换的定义，如下面的代码所示：
 const data = { ok:true, text:"hello world" }
 const obj = new Proxy(data,{/*....*/})
+effect(function effectFn(){
+    document.body.innerText = obj.ok?obj.text:'not'
+})
 ``` 
