@@ -396,5 +396,12 @@ function trigger(target,key){
    const effects = depsMap.get(key)
    effects && effects.forEach(fn=>fn())
 }
-
+如以上代码所示，分别把逻辑封装到track和trigger函数内，这能为我们带来极大的
+灵活性。
 ```
+## 4.4 分支切换与cleanup
+```
+首先，我们需要明确分支切换的定义，如下面的代码所示：
+const data = { ok:true, text:"hello world" }
+const obj = new Proxy(data,{/*....*/})
+``` 
