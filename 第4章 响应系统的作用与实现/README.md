@@ -407,4 +407,35 @@ const obj = new Proxy(data,{/*....*/})
 effect(function effectFn(){
     document.body.innerText = obj.ok?obj.text:'not'
 })
+在effectFn函数内部存在一个三元表达式，根据字段obj.ok值的不同会执行不同的代码
+分支。当字段obj.ok的值发生变化时，代码执行的分支会跟着变化，这就是所谓的分支切换。
+分支切换可能会产生遗留的副作用函数。拿上面这段代码来说，字段obj.ok的初始值为true，
+这是会读取字段obj.ok的值，所以当effectFn函数执行会触发字段obj.ok和字段obj.text
+这两个属性的读取操作，此时副作用函数effectFn与响应式数据之间建立的联系如下：
+data
+  |
+   —— ok
+       |
+        —— effectFn
+  |
+   —— text
+       |
+        ——  effectFn
+图4-4给出了更详细的描述
+WeakMap
+   |
+  key   
+       value
+  data ————--->   Map   
+                   |
+                  key   value    依赖集合
+                   ok  ------->   Set      effectFn
+                  text ------->   Set      effectFn
+图4-4 副作用函数与响应式数据之间的联系
+（**--我自己梳理一下，首先是原始数据对象作为WeakMap的key值    --！**）                 
+
+
+
+
+
 ``` 
