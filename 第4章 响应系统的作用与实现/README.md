@@ -437,7 +437,37 @@ WeakMap
 的value值是Set集合（Set集合中存储的是 里面引用该key值的副作用函数。），    --！**）                 
 WeakMap --- Map  --- Set
 
+可以看到，副作用函数effectFn分别被字段data.ok和data.text所对应的依赖集合收集。
+当字段obj.ok的值修改为false，并触发副作用函数重新执行后，由于此时字段obj.text不
+会被读取，只会触发字段obj.ok的读取操作，所以理想情况下副作用函数effectFn不应该被
+字段obj.text所对应的依赖集合收藏，如图4-5所示。
+WeakMap
+   |
+  key   
+       value
+  data ————--->   Map   
+                   |
+                  key   value    依赖集合
+                   ok  ------->   Set      effectFn
+    图4-5 理想情况下副作用函数与响应式数据之间的联系
+但按照前文的实现，我们还做不到这一点。也就是说，当我们把字段obj.ok的值修改为
+false，并触发副作用函数重新执行之后，整个依赖关系仍然保持图4-4所描述的那样，这时就产生
+了遗留的副作用函数。
+遗留的副作用函数会导致不必要的更新，拿下面这段代码来说：
+const data = { ok:true,text:'hello world' }
+const obj = new Proxy(data,{/*....*/})  
 
+effect(function effectFn(){
+    document.body.innerText = obj.ok?obj.text:'not'
+})
+obj.ok的初始值为true，当我们将其修改为false后：
+obj.ok = false
+
+这样会触发更新，即副作用函数会重新执行。但由于此时obj.ok的值为false，所以不再会读
+取字段obj.text的值，换句话说，无论字段obj.text的值如何变化，document.body.innerText的
+值始终都是字符串‘not’。所以最好的结果是，无论obj.text的值怎么变，都不需要重新执行副作用函数
+。但事实并非如此，如果我们再尝试修改obj.text的值：
+obj.text = 'hello vue3'
 
 
 ``` 
