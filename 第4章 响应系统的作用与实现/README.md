@@ -432,8 +432,10 @@ WeakMap
                    ok  ------->   Set      effectFn
                   text ------->   Set      effectFn
 图4-4 副作用函数与响应式数据之间的联系
-（**--我自己梳理一下，首先是原始数据对象作为WeakMap的key值    --！**）                 
-
+（**--我自己梳理一下，首先是原始数据对象作为WeakMap的key值，WeakMap的value值
+是Map（Map的key值是原始数据对象中的数据名，其中可以是对象，基本数据等），Map
+的value值是Set集合（Set集合中存储的是 里面引用该key值的副作用函数。），    --！**）                 
+WeakMap --- Map  --- Set
 
 
 
