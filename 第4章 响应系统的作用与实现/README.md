@@ -275,7 +275,7 @@ target
 “桶”的数据结构。  
 // 存储副作用函数的桶
 const bucket = new WeakMap()
-然后修改get/set拦截器代码：
+// 然后修改get/set拦截器代码：
 const obj = new Proxy(data,{
     // 拦截读取操作
     get(target,key){
@@ -467,7 +467,8 @@ obj.ok = false
 取字段obj.text的值，换句话说，无论字段obj.text的值如何变化，document.body.innerText的
 值始终都是字符串‘not’。所以最好的结果是，无论obj.text的值怎么变，都不需要重新执行副作用函数
 。但事实并非如此，如果我们再尝试修改obj.text的值：
-obj.text = 'hello vue3'
+obj.text = 'hello vue3' 
 这仍然会导致副作用函数重新执行，即使document.body.innerText的值不需要变化。
+（**--需要自己尝试一下。--？**）
 
 ``` 
