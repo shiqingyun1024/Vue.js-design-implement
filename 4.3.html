@@ -12,7 +12,7 @@
     <script>
         // 用一个全局变量存储被注册的副作用函数
         let activeEffect;
-        let data = {};
+        let data = {text:'hello world'};
         // effect函数用于注册副作用函数
         function effect(fn) {
             // 当调用effect注册副作用函数时，将副作用函数fn赋值给activeEffect
@@ -28,19 +28,20 @@
             // WeakMap --> Map --> Set
             // 拦截读取操作
             get(target, key) {
+                console.log('get')
                 // 因为没有函数使用这个属性值，所以不需要走get下面的操作
                 if (!activeEffect) return;
                 // 根据target从“桶”中取得depsMap，它也是一个Map类型：key --> effects
                 let depsMap = bucket.get(target) // 有个疑问，这个target是什么？target是代理的目标对象，也就是data
                 if (!depsMap) {
-                    bucket.set(target, (depsMap => new Map()))
+                    bucket.set(target, (depsMap = new Map()))
                 }
                 // 再根据key从depsMap中取得deps，它是一个Set类型，
                 // 里面存储着所有与当前key相关联的副作用函数：effects
                 let deps = depsMap.get(key)
                 // 如果deps不存在，同样新建一个Set并与key关联
                 if (!deps) {
-                    depsMap.set(key, (deps = new set()))
+                    depsMap.set(key, (deps = new Set()))
                 }
                 // 最后将当前激活的副作用函数添加到“桶”里
                 deps.add(activeEffect)
@@ -62,11 +63,14 @@
                 effects && effects.forEach(fn=>fn())
             }
         })
-        obj.text = "hello world"
-        function effect() {
+        // obj.text = "hello world"
+        function effectFn() {
+            console.log('effect')
             document.body.innerText = obj.text  // 记住这里是obj，使用的是代理之后的数据
         }
-        effect()
+        // 使用了effect函数对effectFn函数做一个处理，这样就可以把effectFn函数保存在一个
+        // 全局的动态变量中，以便于进行一对一的存储，这样就实现了动态的存储。
+        effect(effectFn)
         setTimeout(function () {
             obj.text = 'hello vue3' // 记住这里是obj，使用的是代理之后的数据
         }, 3000)
