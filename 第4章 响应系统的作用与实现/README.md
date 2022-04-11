@@ -473,6 +473,59 @@ obj.text = 'hello vue3'
 （**--需要自己尝试一下。--？**）
 (**--经过自己的尝试，确实如此--**)
 
-解决这个问题的思路很简单
+解决这个问题的思路很简单，每次副作用函数执行时，我们可以先把它从所有与之关联的依赖集合中删除，
+如图4-6所示：
+WeakMap
+   |
+  key   
+       value
+  data ————--->   Map   
+                   |
+                  key   value    依赖集合
+                   ok  ------->   Set      X effectFn X
+                  text ------->   Set      X effectFn X
+如图4-6 断开副作用函数与响应式数据之间的联系
+当副作用函数执行完毕后，会重新建立联系，但在新的联系中不会包含遗留的副作用函数，
+即图4-5所描述的那样。所以，如果我们能做到每次副作用函数执行前，将其从相关联的依赖
+集合中移除，那么问题就迎刃而解了。
+要将一个副作用函数从所有与之关联的依赖集合中移除，就需要明确知道哪些依赖集合中包含
+它，因此我们需要重新设计副作用函数，如下面的代码所示。在effect内部我们定义了新的
+effectFn函数，并为其添加了effectFn.deps属性，该属性是一个数组，用来存储所有包含
+当前副作用函数的依赖集合。
+// 用一个全局变量存储被注册的副作用函数
+let activeEffect
+function effect(fn){
+   const effectFn = ()=>{
+       // 当effectFn执行时，将其设置为当前激活的副作用函数
+       activeEffect = effectFn
+       fn()
+   }
+   // activeEffect.deps用来存储所有与该副作用函数相关联的依赖集合
+   effectFn.deps = []
+   // 执行副作用函数
+   effectFn()
+}
+那么effectFn.deps数组中的依赖集合是如何收集的呢？其实是在track函数中：
+function track(target,key){
+  // 没有activeEffect，直接return
+  if(!activeEffect) return 
+  let depsMap = bucket.get(target)
+  if(!depsMap){
+      bucket.set(target,(depsMap = new Map()))
+  }
+  let deps = depsMap.get(key)
+  if(!deps){
+      depsMap.set(key,(deps = new Set()))
+  }
+  // 把当前激活的副作用函数添加到依赖集合deps中
+  deps.add(activeEffect)
+  // deps就是一个与当前副作用函数存在联系的依赖集合
+  // 将其添加到activeEffect.deps数组中
+  activeEffect.deps.push(deps) // 新增
+}
+如上代码所示，在track函数中我们将当前执行的副作用函数activeEffect添加到
+依赖集合deps中，这说明deps就是一个与当前副作用函数存在联系的依赖集合，于是我们也把它添加
+到activeEffect.deps数组中，
+
 
 ``` 
