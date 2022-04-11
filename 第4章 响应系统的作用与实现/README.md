@@ -282,7 +282,8 @@ const obj = new Proxy(data,{
         // 没有activeEffect，直接return
         if(!activeEffect) return
         // 根据target从“桶”中取得depsMap，它也是一个Map类型：key --> effects
-        let depsMap = bucket.get(target) // 有个疑问，这个target是什么？
+        // 有个疑问，这个target是什么？ 答：target参数表示所要拦截的目标对象
+        let depsMap = bucket.get(target) 
         // 如果不存在depsMap，那么新建一个Map并与target关联
         if(!depsMap){
           bucket.set(target,( depsMap = new Map()))
