@@ -525,7 +525,24 @@ function track(target,key){
 }
 如上代码所示，在track函数中我们将当前执行的副作用函数activeEffect添加到
 依赖集合deps中，这说明deps就是一个与当前副作用函数存在联系的依赖集合，于是我们也把它添加
-到activeEffect.deps数组中，
-
-
+到activeEffect.deps数组中，这样就完成了对依赖集合的收集。图4-7描述了这一步所建立的
+关系。
+WeakMap
+   |
+  key   
+       value
+  data ————--->   Map   
+                   |
+                  key   value    依赖集合
+                   ok  ------->   Set ------- effectFn 
+                                         X
+                  text ------->   Set ------- effectFn 
+            图4-7 对依赖集合的收集
+有了这个联系后，我们就可以知道在每次副作用函数执行时，根据effectFn.deps获取所有相关联的依赖集合，
+（也就是obj中有几个属性用在了副作用函数中）
+进而将副作用函数从依赖集合中移除：
+// 用一个全局变量存储被注册的副作用函数          
+let activeEffect
+function effect(fn){
+   const effectFn = ()=>{
 ``` 
