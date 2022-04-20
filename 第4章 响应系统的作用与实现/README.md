@@ -545,4 +545,51 @@ WeakMap
 let activeEffect
 function effect(fn){
    const effectFn = ()=>{
+       // 调用cleanup函数完成清除工作
+       cleanup(effectFn) // 新增
+       activeEffect = effectFn
+       fn()
+   }
+   effectFn.deps = []
+   effectFn()
+} 
+下面是cleanup函数的实现
+function cleanup(effectFn){
+    // 遍历effectFn.deps数组
+    for(let i = 0; i < effectFn.deps; i++){
+        // deps是依赖集合
+        const deps = effectFn.deps[i]
+        // 将effectFn从依赖集合中移除
+        deps.delete(effectFn)
+    }
+    // 最后需要重置effectFn.deps数组
+    effectFn.deps.length = 0;
+}
+cleanup函数接收副作用函数作为参数，遍历副作用函数的effectFn.deps数组，该数组
+的每一项都是一个依赖集合，然后将该副作用函数从依赖集合中移除，最后重置effectFn.
+deps数组。
+至此，我们的响应式系统已经可以避免副作用函数产生遗留了。但如果你尝试运行代码，会发
+现目前的实现会导致无限循环执行，问题出在trigger（触发）函数中：
+function trigger(target,key){ // 放在set拦截函数使用中
+    const depsMap = bucket.get(target);
+    if(depsMap) return;
+    const effects = depsMap.get(key);
+    effects && effects.forEach(fn=>fn()) // 问题出在这行代码
+} 
+在trigger函数内部，我们遍历effects集合，它是一个Set集合，里面存储着副作用函数。 
+当副作用函数执行时，会调用cleanup进行清除，实际上就是从effects集合中将当前执行
+的副作用函数剔除，但是副作用函数的执行会导致其重新被收集到集合中，而此时对于effects
+集合的遍历仍在进行。这个行为可以用如下简短的代码来表达：
+const set = new Set([1])
+set.forEach(item=>{
+    set.delete(1)
+    set.add(1)
+    console.log('遍历中')
+})
+// 无限执行下去，先删除，后添加，然后继续遍历，然后再删除，再添加，这样就会循环下去。
+
+在上面这段代码中，我们创建了一个集合set，它里面有一个元素数字1，接着我们调用forEach遍历
+该集合。在遍历过程中，首先调用delete(1)删除数字1，紧接着调用add(1)将数字1加回。最后打印
+‘遍历中’。如果我们在浏览器中执行这段代码，就会发现它无限执行下去。
+
 ``` 
