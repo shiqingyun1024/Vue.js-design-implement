@@ -619,6 +619,8 @@ function trigger(target,key){ // 放在set拦截函数使用中
 提示：ECMA关于Set.prototype.forEach的规范，可参见ECMAScript2020 Language Specification
 ``` 
 ## 4.5 嵌套的effect与effect栈
+什么是栈？后进先出（战后），像是一个容器一头是封闭的，只能从一头放东西，取东西。
+在栈中，我们只能访问最新添加的数据。队列是先进先出。（少先队）
 ```
 effect 是可以发生嵌套的，例如：
 effec(function effectFn1(){
