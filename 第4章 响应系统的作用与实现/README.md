@@ -590,6 +590,29 @@ set.forEach(item=>{
 
 在上面这段代码中，我们创建了一个集合set，它里面有一个元素数字1，接着我们调用forEach遍历
 该集合。在遍历过程中，首先调用delete(1)删除数字1，紧接着调用add(1)将数字1加回。最后打印
-‘遍历中’。如果我们在浏览器中执行这段代码，就会发现它无限执行下去。
+‘遍历中’。如果我们在浏览器中执行这段代码，就会发现它无限执行下去。（**--会陷入死循环中--**）
 
+语言规范中对此有明确的说明，在调用forEach遍历Set集合时，如果一个值已经被访问过了，但该
+值被删除并重新添加到集合，如果此时forEach遍历没有结束，那么该值会重新被访问。
+因此，上面的代码会无限执行。解决办法很简单，我们可以构造另外一个Set集合并遍历它：
+const set = new Set([1])
+const newSet = new Set(set)
+newSet.forEach(item=>{
+    set.delete(1)
+    set.add(1)
+    console.log('遍历中')
+})
+这样就不会无限执行了。回到trigger函数，我们需要同样的手段来避免无限执行：
+function trigger(target,key){ // 放在set拦截函数使用中
+    const depsMap = bucket.get(target);
+    if(depsMap) return;
+
+    const effects = depsMap.get(key);
+
+    const effectsToRun = new Set(effects) // 新增
+    effectsToRun.forEach(effectFn=>effectFn()) // 新增
+    // effects && effects.forEach(fn=>fn()) // 问题出在这行代码，这行代码删除
+} 
+如以上代码所示，我们新构造了effectsToRun集合并遍历它，代替直接遍历effects集合，
+从而避免了无限执行
 ``` 
