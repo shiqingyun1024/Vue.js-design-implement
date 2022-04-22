@@ -615,4 +615,14 @@ function trigger(target,key){ // 放在set拦截函数使用中
 } 
 如以上代码所示，我们新构造了effectsToRun集合并遍历它，代替直接遍历effects集合，
 从而避免了无限执行
+
+提示：ECMA关于Set.prototype.forEach的规范，可参见ECMAScript2020 Language Specification
 ``` 
+## 4.5 嵌套的effect与effect栈
+```
+effect 是可以发生嵌套的，例如：
+effec(function effectFn1(){
+    effect(function effectFn2(){/*....*/})
+    /*....*/
+})
+```
