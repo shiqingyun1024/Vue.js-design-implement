@@ -661,4 +661,11 @@ effect(()=>{
 这个例子说明了为什么effect要设计成可嵌套的。接下来，我们需要搞清楚，如果effect不支持
 嵌套会发生什么？实际上，按照前文的介绍和实现来看，我们所是实现的响应式系统并不支持effect
 嵌套，可以用下面的代码来测试一下。
+// 原始数据
+const data = {foo:true,bar:true}
+// 代理对象
+const obj = new Proxy(data,{/*....*/})
+
+// 全局变量
+let temp1，temp2
 ```
