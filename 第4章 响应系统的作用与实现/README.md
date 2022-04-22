@@ -625,4 +625,38 @@ effec(function effectFn1(){
     effect(function effectFn2(){/*....*/})
     /*....*/
 })
+在上面这段代码中，effectFn1内部嵌套了effectFn2，effectFn1的执行会导致effectFn2的
+执行。那么，什么场景下会出现嵌套的effect呢？拿Vue.js来说，实际上Vue.js的渲染函数就是
+在一个effect中执行的：
+// Foo组件
+const Foo = {
+    render(){
+        return /*....*/
+    }
+}
+
+在一个effect中执行Foo组件的渲染函数：
+effect(()=>{
+    Foo.render()
+})
+当组件发生嵌套时，例如Foo组件渲染了Bar组件：
+// Bar组件
+const Bar = {
+    render(){/*....*/}
+}
+// Foo组件渲染了Bar组件
+const Foo = {
+    render(){
+        return <Bar/> // jsx语法
+    }
+}
+此时就发生了effect嵌套，它相当于：
+effect(()=>{
+    Foo.render()
+    // 嵌套
+    effect(()=>{
+        Bar.render()
+    })
+})
+这个例子
 ```
