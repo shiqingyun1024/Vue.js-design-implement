@@ -670,4 +670,48 @@ const obj = new Proxy(data,{/*....*/})
 
 // 全局变量
 let temp1，temp2
+// effectFn1嵌套了 effectFn2
+effect(function effectFn1(){
+    console.log('effectFn1 执行')
+    effect(function effectFn2(){
+        console.log('effectFn2 执行')
+        // 在effectFn2中读取obj.bar属性
+        temp2 = obj.bar
+    })
+    // 在effectFn1中读取obj.foo属性
+    temp1 = obj.foo
+})
+在上面这段代码中，effectFn1内部嵌套了effectFn2，很明显，effectFn1的执行会导致
+effectFn2的执行。需要注意的是，我们在effectFn2中读取了字段obj.bar，在effectFn1中读
+取了字段obj.foo，并且effectFn2的执行先于对字段obj.foo的读取操作。在理想情况下，我们
+希望副作用函数与对象属性之间的联系如下：
+data
+  |
+   foo
+    |
+     effectFn1
+  |
+   bar
+    |
+     effectFn2
+在这种情况下，我们希望当修改data.foo时会触发effectFn1执行。由于effectFn2嵌套在effectFn1
+里，所以会间接触发effectFn2执行，而当修改obj.bar时，只会触发effectFn2执行。但结果不是这样的，
+我们尝试修改obj.foo的值，会发现输出为：
+'effectFn1 执行'     
+'effectFn2 执行'     
+'effectFn2 执行'  
+一共打印三次，前两次分别是副作用函数effectFn1与effectFn2初始执行的打印结果，到这一步是正常的，
+问题出在第三行打印上。我们修改了obj.foo的值，发现effectFn1并没有重新执行，反而使得effectFn2
+重新执行了，这显然不符合预期。
+问题出在哪里呢？其实就出在我们实现的effect函数与activeEffect上。观察下面这段代码：
+// 用一个全局变量存储当前激活的effect函数
+let activeEffect
+function effect(fn){
+   const effectFn = () =>{
+       cleanup(effectFn)
+       // 当调用effect注册副作用函数时，将副作用函数复制给activeEffect
+       activeEffect = effectFn
+       fn()
+   }
+}   
 ```
