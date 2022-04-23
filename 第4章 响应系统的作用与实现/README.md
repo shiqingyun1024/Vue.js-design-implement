@@ -713,5 +713,12 @@ function effect(fn){
        activeEffect = effectFn
        fn()
    }
-}   
+   // activeEffect.deps用来存储所有与该副作用函数相关的依赖集合
+   effectFn.deps = []
+   // 执行副作用函数
+   effectFn()
+} 
+我们用全局变量activeEffect来存储通过effect函数注册的副作用函数，这意味着同一
+时刻activeEffect所存储的副作用函数只能有一个。当副作用函数发生嵌套时，内层副作用
+函数的执行会覆盖activeEffect的值，并且永远不会恢复到原来的值。  
 ```
