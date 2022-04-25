@@ -748,5 +748,19 @@ function effect(fn) {
     effectFn()
 }
 我们定义了effectStack数组，用它来模拟栈，activeEffect没有变化，它仍然指向当前
-正在执行的副作用函数。不同的是，当前执行的  
+正在执行的副作用函数。不同的是，当前执行的副作用函数会被压入栈顶，这样当副作用函数
+发生嵌套时，栈底存储的就是外层副作用函数，而栈顶存储的则是内层副作用函数，如图4-8所示：
+当内层副作用函数effectFn2执行完毕后，它会被弹出栈，并将副作用函数effectFn1设置为
+activeEffect，如图4-9所示。
+
+activeEffect ------> effectFn2
+                     effectFn1
+                     effectStack
+       图4-8 副作用函数
+
+activeEffect ------> effectFn2---->弹出
+                     effectFn1
+                     effectStack
+       图4-9 副作用函数从栈中弹出       
+如此一来，响应式数据就只会收集直接读取其值的副作用函数作为依赖，从而避免发生错乱。
 ```
