@@ -720,5 +720,32 @@ function effect(fn){
 } 
 我们用全局变量activeEffect来存储通过effect函数注册的副作用函数，这意味着同一
 时刻activeEffect所存储的副作用函数只能有一个。当副作用函数发生嵌套时，内层副作用
-函数的执行会覆盖activeEffect的值，并且永远不会恢复到原来的值。  
+函数的执行会覆盖activeEffect的值，并且永远不会恢复到原来的值。这时如果再有响应式数据
+进行依赖收集，即使这个响应式数据是在外层副作用函数中读取的，它们收集到的副作用函数也都
+会是内层副作用函数，这就是问题所在。
+为了解决这个问题，我们需要一个副作用函数栈effectStack，在副作用函数执行时，将当前副
+作用函数压入栈中，待副作用函数执行完毕后将其从栈中弹出，并始终让activeEffect指向栈顶
+的副作用函数。这样就能做到一个响应式数据只会收集直接读取其值的副作用函数，而不会出现相互影响的情况，如以下代码所示：
+// 用一个全局变量存储当前激活的effect函数
+let activeEffect
+// effect栈
+const effectStack = [] // 新增
+function effect(fn) {
+    const effectFn = () =>{
+        cleanup(effectFn)
+        // 当调用effect注册副作用函数时，将副作用函数复制给activeEffect
+        activeEffect = effectFn
+        // 在调用副作用函数之前将当前副作用函数压入栈中
+        effectStack.push(effectFn) // 新增
+        fn()
+        // 在当前副作用函数执行完毕后，将当前副作用函数弹出栈，并把activeEffect还原为
+        // 之前的值
+        effectStack.pop() // 新增
+        activeEffect = effectStack[effectStack.length - 1] // 新增
+    }
+    // activeEffect.deps用来存储所有与该副作用函数相关的依赖集合
+    effectFn.deps = []
+    effectFn()
+}
+我们定义了effectStack数组，用它  
 ```
