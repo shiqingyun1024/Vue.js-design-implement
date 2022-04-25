@@ -747,5 +747,6 @@ function effect(fn) {
     effectFn.deps = []
     effectFn()
 }
-我们定义了effectStack数组，用它  
+我们定义了effectStack数组，用它来模拟栈，activeEffect没有变化，它仍然指向当前
+正在执行的副作用函数。不同的是，当前执行的  
 ```
