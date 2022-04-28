@@ -784,4 +784,24 @@ effect(()=>{
 将当前副作用函数收集到’桶‘中，接着将其加1后再赋值给obj.foo，此时会触发trigger操作，
 即把“桶”中的副作用函数取出并执行。但问题是该副作用函数正在执行中，还没执行完毕，就要
 开始下一次的执行。这样会导致无限递归地调用自己，于是就产生了栈溢出。
+
+解决方法并不难。通过分析这个问题我们能够发现，读取和设置操作是在同一个副作用函数内进行
+的。此时无论是在track时收集的副作用函数，还是trigger时要触发执行的副作用函数，都是
+activeEffect。基于此，我们可以在trigger动作发生时增加守卫条件：如果trigger触发执行
+的副作用函数与当前正在执行的副作用函数相同，则不触发执行，如以下代码所示：
+function trigger(target,key){
+    const depsMap = bucket.get(target)
+    if(!depsMap) return;
+    const effects = depsMap.get(key)
+    const effectsToRun = new Set()
+    effects && effects.forEach(effectFn=>{
+        // 如果trigger触发执行的副作用函数与当前正在执行的副作用函数相同，则不触发执行
+        if(effectFn !== activeEffect){
+            effectsToRun.add(effectFn)
+        }
+    })
+    effectsToRun.forEach(effectFn=>effectFn())
+    // effects && effects.forEach(effectFn=>effectFn())
+}
+这样我们就能够避免无限递归调用，从而避免栈溢出。
 ```
